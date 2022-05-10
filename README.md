@@ -1,4 +1,4 @@
-# # Blackjack project
+# Blackjack project
 
 ![Project Image](https://www.pngitem.com/pimgs/m/12-122309_transparent-blackjack-png-graphic-design-png-download.png)
 
