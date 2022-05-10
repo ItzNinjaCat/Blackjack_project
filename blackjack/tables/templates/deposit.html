@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+<style>
+body {
+    background: url('{% static "/media/base.jpg"%}') no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+</style>
+<style>
+.button {
+  border: none;
+  color: white;
+  padding: 16px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  transition-duration: 0.4s;
+  cursor: pointer;
+}
+
+.home {
+  background-color: white; 
+  color: black; 
+  border: 2px solid #f20505;
+}
+
+.home:hover {
+  background-color: #f20505;
+  color: white;
+}
+
+.back {
+  background-color: white; 
+  color: black; 
+  border: 2px solid #f5da0c;
+}
+
+.back:hover {
+  background-color: #f5da0c;
+  color: white;
+
+</style>
+
+<style>
+.depositfrm {
+    color: white;
+}
+</style>
+</head>
+
+<body>
+
+  {% block content %}      
+
+  {% load crispy_forms_tags %}
+
+  <!--Deposit--> 
+  <div class="container py-5">
+    <h1 style="color:white;">Deposit</h1>
+    <form method="POST" class ="depositfrm">
+      {% csrf_token %}
+      {{ deposit_form|crispy }}
+      <button class="btn btn-primary" type="submit">Deposit</a></button>
+    </form>
+  </div>
+
+  {% endblock %}
+  <a href="/" class="button home">Home</button>
+</body>
+</html>

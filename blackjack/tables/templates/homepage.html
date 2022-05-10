@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+<style>
+body {
+    background: url('{% static "/media/base.jpg"%}') no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+</style>
+<style>
+p{text-align: right;}
+
+.button {
+  border: none;
+  color: white;
+  padding: 16px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+  font-size: 16px;
+  margin: 4px 2px;
+  transition-duration: 0.4s;
+  cursor: pointer;
+}
+
+.deposit {
+  background-color: #0ff218;
+  color: black; 
+  border: 2px solid #07a30d;
+  width : 100px;
+  position : absolute;
+  top : 5px;
+  left: 15px;
+}
+
+.deposit:hover {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.withdraw {
+  background-color: #05c1ff; 
+  color: black; 
+  border: 2px solid #008CBA;
+  width : 100px;
+  position : absolute;
+  top : 65px;
+  left: 15px;
+}
+
+.withdraw:hover {
+  background-color: #008CBA;
+  color: white;
+}
+
+.register {
+  background-color: #0320ff; 
+  color: black; 
+  border: 2px solid #0219c4;
+  width : 100px;
+  position : absolute;
+  top : 5px;
+  right: 15px;
+}
+
+.register:hover {
+  background-color: #1a2bad;
+  color: white;
+}
+
+.login {
+  background-color: #9e31f7; 
+  color: black; 
+  border: 2px solid #8e48f0;
+  width : 100px;
+  position : absolute;
+  top : 65px;
+  right: 15px;
+}
+
+.login:hover {
+  background-color: #8e48f0;
+  color: white;
+}
+
+.logout {
+  background-color: #9e31f7; 
+  color: black; 
+  border: 2px solid #8e48f0;
+  width : 100px;
+  position : absolute;
+  bottom : 15px;
+  right: 15px;
+}
+
+.logout:hover {
+  background-color: #8e48f0;
+  color: white;
+ }
+ .table_low {
+  background-color: #9e31f7; 
+  color: black; 
+  border: 2px solid #8e48f0;
+  width : 100px;
+  height : 100px;
+  position : absolute;
+  top : 38%;
+  left: 15%;
+ }
+ .table_low:hover {
+  background-color: #8e48f0;
+  color: white;
+ }
+ 
+  .table_medium {
+  background-color: #9e31f7; 
+  color: black; 
+  border: 2px solid #8e48f0;
+  width : 100px;
+  height : 100px;
+  position : absolute;
+  top : 38%;
+  left: 32%;
+ }
+ .table_medium:hover {
+  background-color: #8e48f0;
+  color: white;
+ }
+ 
+  .table_high {
+  background-color: #9e31f7; 
+  color: black; 
+  border: 2px solid #8e48f0;
+  width : 100px;
+  height : 100px;
+  position : absolute;
+  top : 38%;
+  left: 49%;
+ }
+ .table_high:hover {
+  background-color: #8e48f0;
+  color: white;
+ }
+ 
+  .table_vip {
+  background-color: #9e31f7; 
+  color: black; 
+  border: 2px solid #8e48f0;
+  width : 100px;
+  height : 100px;
+  position : absolute;
+  top : 38%;
+  left: 66%;
+ }
+ .table_vip:hover {
+  background-color: #8e48f0;
+  color: white;
+ }
+}
+
+</style>
+</head>
+<body>
+{% if user.is_authenticated %}
+	<p style = "position:relative; top:5px;"> Logged in as {{ request.user }} </p>
+	<p style = "position:relative; top:7px;"> Account balance is {{ request.user.account_balance }} </p>
+	<a href="/accounts/logout" class="button logout">Logout</a></button>
+{% else %}
+	<div>
+		<a href="/accounts/register" class="button register"> Register</a></button>
+		<a href="/accounts/login" class="button login">Login</a></button>
+	</div>
+{% endif %}
+<div>
+	<a href="/deposit" class="button deposit">Deposit</a></button>
+	<a href="/withdraw" class="button withdraw">Withdraw</a></button>
+</div>
+<div>
+	<a href="/tables/low" class="button table_low">Low<br>(5 - 500)</a></button>
+	<a href="/tables/medium" class="button table_medium">Medium<br>(20 - 1000)</a></button>
+	<a href="/tables/high" class="button table_high">High<br>(50 - 5000)</a></button>
+	<a href="/tables/vip" class="button table_vip">Vip<br>(100 - 10000)</a></button>
+</div>
+</body>
+</html>
