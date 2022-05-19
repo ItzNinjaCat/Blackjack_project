@@ -205,3 +205,13 @@ def table_high(request):
 @login_required()
 def table_vip(request):
 	return render(request=request, template_name="table.html")
+
+def chat(request):
+    return render(request, 'chat.html')
+
+class MediumTable(TemplateView):
+	template_name = 'room.html'
+def room(request, room_name):
+    return render(request, 'room.html', {
+        'room_name': room_name
+    })

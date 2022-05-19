@@ -37,4 +37,6 @@ urlpatterns = [
 	path('tables/medium/', views.table_medium, name="medium"),
 	path('tables/high/', views.table_high, name="high"),
 	path('tables/vip/', views.table_vip, name="vip"),
+    path('chat/', views.chat, name='chat'),
+    path('chat/<str:room_name>/', views.MediumTable.as_view(), name='room'),
 ]

@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'crispy_forms',
 	'tables.apps.TablesConfig',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -148,3 +149,14 @@ PAYPAL_RECEIVER_EMAIL = 'sb-hcle616119189@business.example.com'
 PAYPAL_TEST = True
 
 LOGIN_REDIRECT_URL = 'login'
+
+ASGI_APPLICATION = 'blackjack.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('192.168.179.33', 6379)],
+        },
+    },
+}
