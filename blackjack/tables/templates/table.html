@@ -2,7 +2,7 @@
 {% load static %}
 <html>
 	<head>
-		<link href="{% static "/style.css"%}" rel="stylesheet" >
+		<link href="{% static '/style.css'%}" rel="stylesheet" >
 		<style>
 			body {
 				text-align: center;
@@ -13,31 +13,31 @@
 				background-size: cover;
 			}
 			.five{
-			  background-image: url("{% static "/media/white_chip.png" %}");
+			  background-image: url("{% static '/media/white_chip.png' %}");
 			  font-size: 40px;
 			}
 			.ten{
-			  background-image: url("{% static "/media/black_chip.png" %}");
+			  background-image: url("{% static '/media/black_chip.png' %}");
 			  font-size: 36px;
 			}
 			.twenty{
-			  background-image: url("{% static "/media/red_chip.png" %}");
+			  background-image: url("{% static '/media/red_chip.png' %}");
 			  font-size: 36px;
 			}
 			.fifty{
-			  background-image: url("{% static "/media/green_chip.png" %}");
+			  background-image: url("{% static '/media/green_chip.png' %}");
 			  font-size: 36px;
 			}
 			.hundered{
-			  background-image: url("{% static "/media/blue_chip.png" %}");
+			  background-image: url("{% static '/media/blue_chip.png' %}");
 			  font-size: 24px;
 			}
 			.fivehundered{
-			  background-image: url("{% static "/media/yellow_chip.png" %}");
+			  background-image: url("{% static '/media/yellow_chip.png' %}");
 			  font-size: 24px;
 			}
 			.total{
-			  background-image: url("{% static "/media/total_chip.png" %}");
+			  background-image: url("{% static '/media/total_chip.png' %}");
 			  font-size: 24px;
 			}
 		</style>
@@ -47,7 +47,7 @@
 		<h1>Hi {{ request.user }}</h1>
 
 		<div id = 'card_div'>
-			<img id = "image0" src= "{% static "/media/cards/BACK.png" %}" alt="Card"/>
+			<img id = "image0" src= "{% static '/media/cards/BACK.png' %}" alt="Card"/>
 		</div>	
 		
 		<div id ='btns'>
@@ -168,7 +168,7 @@
 			$(function() {
 				$.ajax({
 					type : 'GET',
-					url: 'balance/',
+					url: '../balance/',
 					success: function(response){
 						
 						if(response <= 5000){
@@ -183,7 +183,7 @@
 							$("#balance_slider").attr("max", 5000);
 							$("#balance_slider").attr('value', 2500);
 						}
-						$("#amount").html($("#balance_slider").attr('value'));
+						$("#amount").html($("#balance_slider").attr('value')).delay(500);
 					}
 				})
 			});
@@ -197,7 +197,7 @@
 						var $img = $(image_name).clone();
 						$img.attr('id', 'image' + card_id);
 						$($img).appendTo("#card_div");
-						var source = "{% static "media/cards/" %}" + response;
+						var source = "{% static 'media/cards/' %}" + response;
 						$(image_name).css({"left": `${pos}px` });
 						$(image_name).on("transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd", function(){
 							
@@ -210,7 +210,7 @@
 			const send_data = () => {
 				$.ajax({
 					type : 'POST',
-					url: 'game_balance/',
+					url: '../game_balance/',
 					data : {
 					  'game_bal' : $("#amount").html(),
 					  'csrfmiddlewaretoken': '{{csrf_token}}',
@@ -281,6 +281,23 @@
 			$("#hit-btn").click( function(){
 				hit();
 			})
+			
+			
+			const chatSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/tables/medium/'
+        );
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            document.querySelector('#chat-log').value += (data.message + '\n');
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+            window.location.replace("/");
+        };
+		
 
 		</script>
 	

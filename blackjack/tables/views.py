@@ -1,4 +1,6 @@
 from django.shortcuts import  render, redirect
+
+from blackjack.settings import REDIS_HOST, REDIS_PORT
 from .forms import NewUserForm, DepositForm, WithdrawForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
@@ -153,27 +155,27 @@ class GetUserBalance(View):
 class GetGameBalance(View):
 	def post(self, request):
 		redis_db = redis.Redis(
-		 host= '192.168.56.1',
-		 port= '6379', 
-		 password = "rootkotka",
-		 db = 1
+		 host= REDIS_HOST,
+		 port= REDIS_PORT, 
+		 
+		 db = 3
 		)
 		redis_db.set(request.user.id, request.POST['game_bal'])
 		return HttpResponse(request.POST['game_bal'])
 
 class LowTableSitView(View):
 	def get(self, request):
-		redis_db_0 = redis.Redis(
-		 host= '192.168.56.1',
-		 port= '6379', 
-		 password = "rootkotka",
-		 db = 0
+		redis_db_2 = redis.Redis(
+		 host= REDIS_HOST,
+		 port= REDIS_PORT, 
+		 
+		 db = 2
 		)
-		redis_db_1 = redis.Redis(
-		 host= '192.168.56.1',
-		 port= '6379', 
-		 password = "rootkotka",
-		 db = 1
+		redis_db_3 = redis.Redis(
+		 host= REDIS_HOST,
+		 port= REDIS_PORT, 
+		 
+		 db = 3
 		)
 		redis_dict = {}
 		redis_dict['id'] = request.user.id
@@ -181,13 +183,13 @@ class LowTableSitView(View):
 		redis_dict['first_name'] = request.user.first_name
 		redis_dict['last_name'] = request.user.last_name
 		redis_dict['table'] = 'low'
-		game_bal = float(redis_db_1.get(request.user.id))
+		game_bal = float(redis_db_3.get(request.user.id))
 		redis_dict['game_balance'] = game_bal
-		redis_db_0.hmset(request.user.id, redis_dict)
+		redis_db_2.hmset(request.user.id, redis_dict)
 		json_object = json.dumps(redis_dict, indent = 4) 
 		request.user.account_balance -= game_bal
 		request.user.save()
-		redis_db_1.delete(request.user.id)
+		#redis_db_3.delete(request.user.id)
 		return JsonResponse(json_object, safe = False)
 
 class LowTableHitView(View):
@@ -195,10 +197,6 @@ class LowTableHitView(View):
 		tmp = get_card()
 		msg = f'{tmp.card_name}-{tmp.suit}.png'
 		return HttpResponse(msg, content_type='text/plain')
-
-@login_required()
-def table_medium(request):
-	return render(request=request, template_name="table.html")
 @login_required()
 def table_high(request):
 	return render(request=request, template_name="table.html")
@@ -210,8 +208,39 @@ def chat(request):
     return render(request, 'chat.html')
 
 class MediumTable(TemplateView):
-	template_name = 'room.html'
-def room(request, room_name):
-    return render(request, 'room.html', {
-        'room_name': room_name
-    })
+	template_name = 'table.html'
+
+class MediumTableSitView(View):
+	def get(self, request):
+		redis_db_2 = redis.Redis(
+		 host= REDIS_HOST,
+		 port= REDIS_PORT, 
+		 
+		 db = 2
+		)
+		redis_db_3 = redis.Redis(
+		 host= REDIS_HOST,
+		 port= REDIS_PORT, 
+		 
+		 db = 3
+		)
+		redis_dict = {}
+		redis_dict['id'] = request.user.id
+		redis_dict['username'] = request.user.username
+		redis_dict['first_name'] = request.user.first_name
+		redis_dict['last_name'] = request.user.last_name
+		redis_dict['table'] = 'medium'
+		game_bal = float(redis_db_3.get(request.user.id))
+		redis_dict['game_balance'] = game_bal
+		redis_db_2.hmset(request.user.id, redis_dict)
+		json_object = json.dumps(redis_dict, indent = 4) 
+		request.user.account_balance -= game_bal
+		request.user.save()
+		redis_db_3.delete(request.user.id)
+		return JsonResponse(json_object, safe = False)
+
+class MediumTableHitView(View):
+	def get(self, request):
+		tmp = get_card()
+		msg = f'{tmp.card_name}-{tmp.suit}.png'
+		return HttpResponse(msg, content_type='text/plain')

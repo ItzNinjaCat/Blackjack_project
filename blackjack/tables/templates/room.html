@@ -16,9 +16,7 @@
         const chatSocket = new WebSocket(
             'ws://'
             + window.location.host
-            + '/ws/chat/'
-            + roomName
-            + '/'
+            + '/ws/tables/medium/'
         );
 
         chatSocket.onmessage = function(e) {
@@ -28,7 +26,7 @@
 
         chatSocket.onclose = function(e) {
             console.error('Chat socket closed unexpectedly');
-            window.location.replace("/");
+            //window.location.replace("/");
         };
 
         document.querySelector('#chat-message-input').focus();
