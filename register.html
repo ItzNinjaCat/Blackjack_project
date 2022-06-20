@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+<style>
+body {
+  margin: 0;
+	padding: 0;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 100vh;
+	font-family: 'Jost', sans-serif;
+	background: linear-gradient(to bottom, #10cbbf, #14bd36, #4d8a21);
+}
+
+.main{
+	width: 400px;
+	height: 1000px;
+	background: red;
+	overflow: hidden;
+	background: url("https://doc-08-2c-docs.googleusercontent.com/docs/securesc/68c90smiglihng9534mvqmq1946dmis5/fo0picsp1nhiucmc0l25s29respgpr4j/1631524275000/03522360960922298374/03522360960922298374/1Sx0jhdpEpnNIydS4rnN4kHSJtU1EyWka?e=view&authuser=0&nonce=gcrocepgbb17m&user=03522360960922298374&hash=tfhgbs86ka6divo3llbvp93mg4csvb38") no-repeat center/ cover;
+	border-radius: 10px;
+	box-shadow: 5px 20px 50px #000;
+}
+</style>
+
+<style>
+.button {
+  border: none;
+  color: white;
+  padding: 16px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  transition-duration: 0.4s;
+  cursor: pointer;
+}
+
+.button {
+  border: none;
+  color: white;
+  padding: 16px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  transition-duration: 0.4s;
+  cursor: pointer;
+}
+
+button{
+	width: 60%;
+	height: 40px;
+	margin: 10px auto;
+	justify-content: center;
+	display: block;
+	color: #fff;
+	background: #054827;
+	font-size: 1em;
+	font-weight: bold;
+	margin-top: 20px;
+	outline: none;
+	border: none;
+	border-radius: 5px;
+	transition: .2s ease-in;
+	cursor: pointer;
+}
+button:hover{
+	background: #0b8d57;
+}
+.loginfrm{
+	position: relative;
+  right: 2%;
+	width:100%;
+	height: 100%;
+  padding: 0 8px;
+}
+
+</style>
+
+<style>
+.loginfrm {
+    color: white;
+}
+.loginfrm label {
+  border: none;
+  font-size: 16px;
+  outline: 0;
+  padding: 16px 0 10px;
+  position: absolute;
+  right: 57%;
+  visibility: hidden;
+  
+  
+}
+
+
+.loginfrm input{
+	width: 60%;
+	height: 20px;
+	background: #e0dede;
+	justify-content: center;
+	display: flex;
+	margin: 20px auto;
+	padding: 10px;
+	border: none;
+	outline: none;
+	border-radius: 5px;
+  
+  
+}
+
+li#Name{
+	border: none;
+  font-size: 16px;
+  outline: 0;
+  padding: 16px 0 10px;
+  position: absolute;
+  top: -5px;
+  left: 83px;
+}
+
+li#realname{
+	border: none;
+  font-size: 16px;
+  outline: 0;
+  padding: 16px 0 10px;
+  position: absolute;
+  top: 110px;
+  left: 83px;
+}
+
+li#sur{
+	border: none;
+  font-size: 16px;
+  outline: 0;
+  padding: 16px 0 10px;
+  position: absolute;
+  top: 170px;
+  left: 83px;
+}
+
+li#email{
+	border: none;
+  font-size: 16px;
+  outline: 0;
+  padding: 16px 0 10px;
+  position: absolute;
+  top: 230px;
+  left: 83px;
+}
+
+li#pass1{
+	border: none;
+  font-size: 16px;
+  outline: 0;
+  padding: 16px 0 10px;
+  position: absolute;
+  top: 290px;
+  left: 83px;
+}
+
+li#pass2{
+	border: none;
+  font-size: 16px;
+  outline: 0;
+  padding: 16px 0 10px;
+  position: absolute;
+  top: 480px;
+  left: 83px;
+}
+
+h1{
+  color: rgb(fff);
+	font-size: 2.3em;
+	justify-content: center;
+	display: flex;
+	margin: 60px;
+	font-weight: bold;
+	cursor: pointer;
+}
+
+.loginfrm p{
+  position: absolute;
+  
+  font-size: 15px;
+  left: 27px;
+  position: relative;
+}
+
+ li:hover{
+  
+  visibility: hidden;
+}
+
+li:focus-visible{
+  visibility: hidden;
+}
+
+</style>
+</head>
+
+<body>
+{% block content %} 
+
+{% load crispy_forms_tags %}         
+
+<!--Register--> 
+<div class="main">
+<div class="container py-5">
+	<h1 style="color:white;">Register</h1>
+	<form method="POST" class="loginfrm">
+    <li id="Name">Enter your name</li>
+    <li id="realname"> Enter your first name</li>
+    <li id="sur"> Enter your last name</li>
+    <li id ="email"> Enter your Email</li>
+    <li id ="pass1"> Enter your password</li>
+    <li id ="pass2"> Enter your password</li>
+		{% csrf_token %}
+		{{ register_form|crispy }}                    
+		<button class="btn btn-primary" type="submit">Register</button>
+    <button onclick="location.href='/accounts/login'" type="button">
+      Have an account?</button>
+    <button onclick="location.href='/'" type="button">HomePage</button>
+	</form>	
+</div>
+</div>
+{% endblock %}
+</body>
+</html>
