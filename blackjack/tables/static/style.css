@@ -17,7 +17,12 @@ img {
 	height:   145px;
 	overflow: hidden;
 }
-#cards_div {
+#player_card_div {
+	display: block;
+	margin: auto;
+}
+
+#dealer_card_div {
 	display: block;
 	margin: auto;
 }
@@ -36,7 +41,7 @@ img {
 }
 
 .button {
-  background-color: #4CAF50; /* Green */
+  background-color: lime; /* Green */
   border: none;
   color: white;
   padding: 16px 32px;
@@ -49,38 +54,10 @@ img {
   cursor: pointer;
 }
 
-.sit {
-  background-color: lime; 
-  color: black; 
-  border: 2px solid #4CAF50;
-}
-
-.sit:hover {
+.button:hover{
   background-color: #4CAF50;
-  color: white;
+  color: white; 
 }
-
-.hit {
-  background-color: lime; 
-  color: black; 
-  border: 2px solid #4CAF50;
-}
-
-.hit:hover {
-  background-color: #4CAF50;
-  color: white;
-}
-
-.bet {
-  background-color: lime; 
-  color: black; 
-  border: 2px solid #4CAF50;
-}
-
-.bet:hover {
-  background-color: #4CAF50;
-  color: white;
-}			
 
 .disabled {
   opacity: 0.6;

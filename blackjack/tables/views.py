@@ -197,6 +197,7 @@ class LowTableHitView(View):
 		tmp = get_card()
 		msg = f'{tmp.card_name}-{tmp.suit}.png'
 		return HttpResponse(msg, content_type='text/plain')
+
 @login_required()
 def table_high(request):
 	return render(request=request, template_name="table.html")

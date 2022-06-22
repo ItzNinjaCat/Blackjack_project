@@ -46,13 +46,19 @@
 
 		<h1>Hi {{ request.user }}</h1>
 
-		<div id = 'card_div'>
-			<img id = "image0" src= "{% static '/media/cards/BACK.png' %}" alt="Card"/>
+		<div id = 'player_card_div'>
+			<img id = "player_image0" src= "{% static '/media/cards/BACK.png' %}" alt="Card"/>
 		</div>	
-		
+		<div id = 'dealer_card_div'>
+			<img id = "dealer_image0" src= "{% static '/media/cards/BACK.png' %}" alt="Card"/>
+		</div>	
+
 		<div id ='btns'>
-			<button class = "button sit" id = "sit-btn"> Sit </button>
-			<button class = "button hit hidden" id="hit-btn">Hit Me</button>
+			<button class = "button" id = "sit-btn"> Sit </button>
+			<button class = "button hidden" id="hit-btn">Hit Me</button>
+			<button class = "button hidden" id="stand-btn">Stand</button>
+			<button class = "button hidden" id = "new-game-btn">Begin new game</button>
+			<button class = "button hidden" id = "leave-btn">Leave table</button>
 		</div>
 		
 		<div class="slidecontainer" id="slider_div">
@@ -71,17 +77,104 @@
 			<button class = "hidden" id = "500">500</button>
 			<button class = "hidden" id = "bet-btn" disabled></button>
 		</div>
-
-
+		
+		
 		<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 		<script> 
 			
 			var user_obj;
 			var user_bal;
 			var total_bet = 0;
-			
-				
-			
+			var deck = [];
+			var dealer_score = 0;
+			var dealer_hand = [];
+			var player_score = 0;
+			var player_hand = [];
+			var dealer_pos = 100;
+			var player_pos = 100;
+			var player_card_id = 0;
+			var dealer_card_id = 0;
+			const game_status = Object.freeze({
+				dealer_win : -1,
+				ongoing : 0,
+				player_win : 1,
+				tie: 2,
+				player_bkacjack_win: 3
+			});
+
+
+
+			function shuffle(){
+				let deck = [];
+				const suits = ["S", "D", "C", "H"];
+				const values = [
+				"A",
+				"2",
+				"3",
+				"4",
+				"5",
+				"6",
+				"7",
+				"8",
+				"9",
+				"10",
+				"J",
+				"Q",
+				"K"
+				];
+				for(let i = 0; i < 4; i++){
+					for (let j = 0; j < suits.length; j++) {
+						for (let k = 0; k < values.length; k++) {
+							let power = k + 1;
+							if(power == 1){
+								power = 11
+							}
+							else if(power >= 10){
+								power = 10
+							}
+							let card = { Value: values[k], Suit: suits[j], Power: power, Id: k + 1};
+							deck.push(card);
+						}
+					}
+				}
+				for (let i = deck.length - 1; i > 0; i--) {
+					let j = Math.floor(Math.random() * i);
+					let temp = deck[i];
+					deck[i] = deck[j];
+					deck[j] = temp;
+				}
+				return deck;
+			}
+
+			function get_card(){
+				if(deck <= 52 * 2){
+					deck = shuffle().slice()
+				}
+				return deck.pop();
+			}
+
+			function update_score(hand, score){
+				let tmp_score = 0;
+				for(let card of hand){
+					if(card.Id == 1){
+						tmp_score = 0
+						for(let i of hand){
+							tmp_score += i.Power
+							if(tmp_score > 21){
+								card.Power = 1
+							}
+						}
+					}
+				}
+				tmp_score = 0
+				for(card of hand){
+					tmp_score += card.Power
+				}
+				score = tmp_score;
+				console.log("score " + score);
+				return score;
+			}
+
 			function update_chips(){
 				if(user_obj.game_balance - total_bet < 500){
 					$("#500").attr('class', 'chip fivehundered disabled');
@@ -155,6 +248,7 @@
 						$("#bet-btn").attr('class', 'hidden');
 						update_chips();
 						console.log(user_obj);
+						deck = shuffle().slice();
 					}
 				})
 				
@@ -171,42 +265,131 @@
 					url: '../balance/',
 					success: function(response){
 						
-						if(response <= 5000){
+						if(response <= 500){
 							$("#balance_slider").attr("max", response);
-							var mid_val = parseInt(response / 2);
+							let mid_val = parseInt(response / 2);
 							while(mid_val % 5 != 0){
 								mid_val--;
 							}
 							$("#balance_slider").attr('value', mid_val);
 						}
 						else{
-							$("#balance_slider").attr("max", 5000);
-							$("#balance_slider").attr('value', 2500);
+							$("#balance_slider").attr("max", 500);
+							$("#balance_slider").attr('value', 250);
 						}
 						$("#amount").html($("#balance_slider").attr('value')).delay(500);
 					}
 				})
 			});
 			
-			const hit = () => {
-				$.ajax({
-					type : 'GET',
-					url: 'hit/',
-					success: function(response){
-						var image_name = '#image' + card_id++;
-						var $img = $(image_name).clone();
-						$img.attr('id', 'image' + card_id);
-						$($img).appendTo("#card_div");
-						var source = "{% static 'media/cards/' %}" + response;
-						$(image_name).css({"left": `${pos}px` });
-						$(image_name).on("transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd", function(){
-							
-							setTimeout(() => {   $(image_name).attr('src',source); }, 300);
-						});
-						pos +=40;
-					}
-				})
+			function check_midgame_status(){
+				if(player_score < 21){
+					return game_status.ongoing;
+				}
+				else if(player_score > 21){
+					return game_status.dealer_win;
+				}
+				else if(player_score == 21){
+					return game_status.player_blackjack_win;
+				}
 			}
+			function check_final_game_status(){
+				if(player_score == dealer_score){
+					return game_status.tie;
+				}
+				else if(dealer_score > 21){
+					return game_status.player_win;
+				}
+				else if(player_score > 21){
+					return game_status.dealer_win;
+				}
+				else if(player_score == 21){
+					return game_status.player_blackjack_win;
+				}
+				else if(dealer_score > player_score){
+					return game_status.dealer_win;
+				}
+				else if(player_score > dealer_score){
+					return game_status.player_win;
+				}
+			}
+			function dealer_hit(){
+				console.log("dealer");
+				dealer_score = hit(dealer_hand, dealer_score, true);
+			}
+			function player_hit(){
+				console.log("dealer");
+				player_score = hit(player_hand, player_score, false);
+			}
+
+			function stand(){
+				let source = "{% static 'media/cards/' %}" + `${dealer_hand[1].Value}-${dealer_hand[1].Suit}.png`;
+				console.log(source);
+				$("#dealer_image1").attr('src',source);
+				while(dealer_score < 17){
+					dealer_hit();
+				}
+			}
+
+			function finish_game(){
+				let status = check_final_game_status();
+				if(status == game_status.dealer_win){
+
+				}
+				else if(status == game_status.player_win){
+					
+				}
+				else if(status == game_status.player_blackjack_win){
+
+				}
+				else if(status == game_status.tie){
+
+				}
+				$("#new-game-btn").attr('class', 'button enabled');
+				$("#leave-btn").attr('class', 'button enabled');
+			}
+			function hit(hand, score, is_dealer){
+				let card = get_card();
+				hand.push(card);
+				score = update_score(hand, score);
+				let image_name;
+				let $img;
+				if(is_dealer){
+					image_name = '#dealer_image' + dealer_card_id++;
+					$img = $(image_name).clone();
+					$($img).appendTo("#dealer_card_div");
+					$img.attr('id', 'dealer_image' + dealer_card_id);
+				}
+				else{
+					image_name = '#player_image' + player_card_id++;
+					$img = $(image_name).clone();
+					$($img).appendTo("#player_card_div");
+					$img.attr('id', 'player_image' + player_card_id);
+				}
+				let source = "{% static 'media/cards/' %}" + `${card.Value}-${card.Suit}.png`;
+				if(is_dealer){
+					$(image_name).css({"top": '200px'});
+					$(image_name).css({"left": `${dealer_pos}px`});
+					console.log(image_name);
+				}
+				else{
+					$(image_name).css({"left": `${player_pos}px`});
+				}
+				console.log(hand.lenght);
+				if((is_dealer && Object.keys(hand).length != 2) || !is_dealer){
+					$(image_name).on("transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd", function(){
+						setTimeout(() => {   $(image_name).attr('src',source); }, 300);
+					});	
+				}
+				if(is_dealer){
+					dealer_pos +=40;
+				}
+				else{
+					player_pos +=40;
+				}
+				return score;
+			}		
+
 			const send_data = () => {
 				$.ajax({
 					type : 'POST',
@@ -269,36 +452,63 @@
 				$("#100").attr('class', 'hidden');
 				$("#500").attr('class', 'hidden');
 				$("#max").attr('class', 'hidden');
-				hit();
-				setTimeout(() => {hit();}, 500);
+
+				player_score = hit(player_hand, player_score, false);
+				setTimeout(() => {player_score = hit(player_hand, player_score, false);}, 500);
+				setTimeout(() => {dealer_hit();}, 1000);
+				setTimeout(() => {dealer_hit();}, 1500);
 				setTimeout(() => {  
-					$("#hit-btn").attr('class', 'button hit enabled');
+					$("#hit-btn").attr('class', 'button enabled');
+					$("#stand-btn").attr('class', 'button enabled');
 					}, 2000);
 			})
-			
-			var pos = 100;
-			var card_id = 0;
 			$("#hit-btn").click( function(){
-				hit();
+				player_score = hit(player_hand, player_score, false);
+				let status = check_midgame_status();
+				if(status == game_status.dealer_win){
+					$("#hit-btn").attr('class', 'hidden');
+					$("#stand-btn").attr('class', 'hidden');
+					finish_game();
+				}
+				else if(status == game_status.player_blackjack_win){
+					$("#hit-btn").attr('class', 'hidden');
+					$("#stand-btn").attr('class', 'hidden');
+					stand();
+					finish_game();
+				}
 			})
+			$("#stand-btn").click( function(){
+				$("#hit-btn").attr('class', 'hidden');
+				$("#stand-btn").attr('class', 'hidden');
+				stand();
+				finish_game();
+			})	
 			
-			
-			const chatSocket = new WebSocket(
-            'ws://'
-            + window.location.host
-            + '/ws/tables/medium/'
-        );
-        chatSocket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            document.querySelector('#chat-log').value += (data.message + '\n');
-        };
+			$("#new-game-btn").click( function(){
 
-        chatSocket.onclose = function(e) {
-            console.error('Chat socket closed unexpectedly');
-            window.location.replace("/");
-        };
-		
-
+				for(let i = 0; i < Object.keys(player_hand).length; i++){
+					let image_name = "#player_image" + i;
+					$(image_name).css({"left" : '-10000px'});
+					if(i == 0){
+						$(image_name).attr("src", "{% static '/media/cards/BACK.png' %}");
+					}
+					else{
+						$(image_name).remove();
+					}
+				}
+				empty(player_hand);
+				for(let i = 0; i < Object.keys(dealer_hand).length; i++){
+					let image_name = "#dealer_image" + i;
+					$(image_name).css({"left" : '-10000px'});
+					if(i == 0){
+						$(image_name).attr("src", "{% static '/media/cards/BACK.png' %}");
+					}
+					else{
+						$(image_name).remove();
+					}
+				}
+				empty(dealer_hand);
+			});
 		</script>
 	
 	</body>
