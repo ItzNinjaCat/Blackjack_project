@@ -3,6 +3,38 @@ import redis
 from channels.generic.websocket import AsyncWebsocketConsumer
 from blackjack.settings import REDIS_HOST, REDIS_PORT
 from . import views
+import json
+
+class EventEmitter:
+    def setSocket(self, socket):
+        self.socket = socket
+        
+    async def emit(self, event):
+        await self.socket.send(text_data=json.dumps(event))
+        
+em = EventEmitter()
+        
+class EventHandler:
+    def __init__(self) -> None:
+        self.handlers = {}
+        
+    def addEventHandler(self, eventName, handler):
+        self.handlers[eventName] = handler
+        
+    async def handle(self, str_event):
+        event = json.loads(str_event)
+        handler = self.handlers[event['name']]
+        if not handler:
+            raise Exception('No handler for event')
+        await handler(event['data'])
+        
+eh = EventHandler()
+async def sitHandler(data):
+    print("User with id {} has sit on table with id {}".format(data['userId'], data['tableId']))
+    data['emitted'] = 'new'
+    await em.emit(data)
+    
+eh.addEventHandler('SIT', sitHandler)
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -11,6 +43,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
          port= REDIS_PORT,
          db = 1
         )
+        #tableId = getTableId();
         self.room_name = 'medium' #  self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = 'table_%s' % self.room_name
         
@@ -23,17 +56,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
         for i in range(len(ingame_list)):
             ingame_list[i] = int(ingame_list[i].decode())
         
-        
-        if not redis_tables_db.exists(self.room_name) and self.scope['user'].id not in ingame_list:
-            redis_tables_db.lpush(self.room_name, self.scope['user'].id)
+        em.setSocket(self)
         # Join room group
-            await self.channel_layer.group_add(
-                self.room_group_name,
-                self.channel_name
-            )
-            await self.accept()
-        if redis_tables_db.llen(self.room_name) < 7 and self.scope['user'].id not in ingame_list:
-            redis_tables_db.lpush(self.room_name, self.scope['user'].id)
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+        await self.accept()
+        print(redis_tables_db.llen(self.room_name))
+        print(self.scope['user'].id in ingame_list)
+        if redis_tables_db.llen(self.room_name) < 7:
+            if self.scope['user'].id not in ingame_list:    
+                redis_tables_db.lpush(self.room_name, self.scope['user'].id)
         else:
             await self.close(4004)
 
@@ -57,16 +91,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        message = text_data_json['message']
-        # Send message to room group
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'chat_message',
-                'message': message
-            }
-        )
+        await eh.handle(text_data)
+        # text_data_json = json.loads(text_data)
+        # message = text_data_json['message']
+        # # Send message to room group
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         'type': 'chat_message',
+        #         'message': message
+        #     }
+        # )
 
     # Receive message from room group
     async def chat_message(self, event):

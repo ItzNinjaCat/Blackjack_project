@@ -39,4 +39,5 @@ urlpatterns = [
 	path('tables/medium/hit/', login_required(views.MediumTableHitView.as_view()), name = 'table_medium_hit'),
 	path('tables/high/', views.table_high, name="high"),
 	path('tables/vip/', views.table_vip, name="vip"),
+ 
 ]

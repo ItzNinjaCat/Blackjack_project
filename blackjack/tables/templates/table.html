@@ -283,21 +283,33 @@
 			})
 			
 			
-			const chatSocket = new WebSocket(
+		const chatSocket = new WebSocket(
             'ws://'
             + window.location.host
             + '/ws/tables/medium/'
         );
+
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
-            document.querySelector('#chat-log').value += (data.message + '\n');
+			console.log(data)
+            //document.querySelector('#chat-log').value += (data.message + '\n');
         };
 
         chatSocket.onclose = function(e) {
             console.error('Chat socket closed unexpectedly');
             window.location.replace("/");
         };
-		
+		setTimeout(() => {
+			chatSocket.send(
+				JSON.stringify({
+					name: 'SIT', 
+					data: { userId: 'someId', tableId: 'medium' }
+				})
+			);
+			
+		}, 5000);
+
+	
 
 		</script>
 	
