@@ -134,3 +134,13 @@ img {
   background: #04AA6D;
   cursor: pointer;
 }
+
+.dealer_hand{
+  position: absolute;
+  right: 50px;
+}
+.player_hand{
+  position: absolute;
+  right: 50px;
+  bottom: 200px;
+}

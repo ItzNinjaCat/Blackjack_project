@@ -152,7 +152,7 @@ LOGIN_REDIRECT_URL = 'login'
 
 ASGI_APPLICATION = 'blackjack.asgi.application'
 
-REDIS_HOST = '172.19.70.66'
+REDIS_HOST = '192.168.56.1'
 REDIS_PORT = '6379'
 CHANNEL_LAYERS = {
     'default': {
