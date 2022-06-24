@@ -161,12 +161,23 @@ p{text-align: right;}
   color: white;
  }
 
+.acc{
+  position:absolute;
+  top:5px;
+  right:20px;
+}
+.bal{
+  position:absolute;
+  top:40px;
+  right:20px;
+}
+
 </style>
 </head>
 <body>
 {% if user.is_authenticated %}
-	<p style = "position:relative; top:5px;"> Logged in as {{ request.user }} </p>
-	<p style = "position:relative; top:7px;"> Account balance is {{ request.user.account_balance }} </p>
+	<h2 class = "acc"> Logged in as {{ request.user }} </h2>
+	<h2 class = "bal"> Account balance is {{ request.user.account_balance }} </h2>
 	<a href="/accounts/logout" class="button logout">Logout</a></button>
 {% else %}
 	<div>

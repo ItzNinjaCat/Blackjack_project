@@ -45,15 +45,14 @@ body {
 .back:hover {
   background-color: #f5da0c;
   color: white;
-
-</style>
-
-<style>
-.withdrawfrm {
-    color: white;
 }
 </style>
 
+<style>
+.depositfrm {
+    color: white;
+}
+</style>
 </head>
 
 <body>
@@ -62,10 +61,10 @@ body {
 
   {% load crispy_forms_tags %}
 
-  <!--Withdraw--> 
+  <!--Deposit--> 
   <div class="container py-5">
     <h1 style="color:white;">Withdraw</h1>
-    <form method="POST" class = "withdrawfrm">
+    <form method="POST" class ="depositfrm">
       {% csrf_token %}
       {{ withdraw_form|crispy }}
       <button class="btn btn-primary" type="submit">Withdraw</a></button>

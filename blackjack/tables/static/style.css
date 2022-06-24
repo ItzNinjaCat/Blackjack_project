@@ -12,7 +12,7 @@ img {
 	margin: 10px auto;
 	position: absolute;
 	left:     -10000px;
-	top:      400px;
+	top:      450px;
 	width:    100px;
 	height:   145px;
 	overflow: hidden;
@@ -135,12 +135,5 @@ img {
   cursor: pointer;
 }
 
-.dealer_hand{
-  position: absolute;
-  right: 50px;
-}
-.player_hand{
-  position: absolute;
-  right: 50px;
-  bottom: 200px;
-}
+
+

@@ -2,7 +2,7 @@
 {% load static %}
 <html>
 	<head>
-		<link href="{% static '/style.css'%}" rel="stylesheet" >
+		<link href="{% static '/style.css'%}" rel="stylesheet" type="text/css" >
 		<style>
 			body {
 				text-align: center;
@@ -40,11 +40,42 @@
 			  background-image: url("{% static '/media/total_chip.png' %}");
 			  font-size: 24px;
 			}
+			.curr_bal{
+				position: absolute;
+				right: 50px;
+				top: 0px;
+			}
+			.new_bal{
+				position: absolute;
+				right: 50px;
+				top: 40px;
+			}
+			.game_bal{
+				position: absolute;
+				right: 50px;
+				top: 40px;
+			}
+			.dealer_hand{
+				position: absolute;
+				top: 150px;
+				right: 500px;
+			  }
+			.player_hand{
+				position: absolute;
+				right: 500px;
+				bottom: 500px;
+			}
+			  
+
 		</style>
 	</head>
 	<body>
+		<h1 id = "table_id" class = "hidden"> {{ table }}</h1>
+		<h1>Welcome {{ request.user }}</h1>
 
-		<h1>Hi {{ request.user }}</h1>
+		<h2 id = "curr_bal" class = "curr_bal">Account balance </h2>	
+		<h2 id = "new_bal" class = "new_bal">New Balance </h2>	
+		<h2 id = "game_bal" class = "hidden">Game balance</h2>	
 
 		<div id = 'player_card_div'>
 			<img id = "player_image0" src= "{% static '/media/cards/BACK.png' %}" alt="Card"/>
@@ -53,6 +84,8 @@
 			<img id = "dealer_image0" src= "{% static '/media/cards/BACK.png' %}" alt="Card"/>
 		</div>	
 
+
+
 		<div id ='btns'>
 			<button class = "button" id = "sit-btn"> Sit </button>
 			<button class = "button hidden" id="hit-btn">Hit Me</button>
@@ -60,7 +93,7 @@
 			<button class = "button hidden" id = "new-game-btn">Begin new game</button>
 			<button class = "button hidden" id = "leave-btn">Leave table</button>
 		</div>
-		<div>
+		<div id ="hands">
 			<h2 id = "dealer_hand" class = "hidden">Dealer hand </h2>	
 			<h2 id = "player_hand" class = "hidden">Player hand </h2>	
 		</div>
@@ -84,7 +117,7 @@
 		
 		<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 		<script> 
-			
+			const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 			var user_obj;
 			var user_bal;
 			var total_bet = 0;
@@ -93,10 +126,13 @@
 			var dealer_hand = [];
 			var player_score = 0;
 			var player_hand = [];
-			var dealer_pos = 100;
-			var player_pos = 100;
+			var dealer_pos = 700;
+			var player_pos = 700;
 			var player_card_id = 0;
 			var dealer_card_id = 0;
+			var min_bal = 0;
+			var max_bal = 0;
+			var acc_bal = 0;
 			const game_status = Object.freeze({
 				dealer_win : -1,
 				ongoing : 0,
@@ -104,8 +140,64 @@
 				tie: 2,
 				player_bkacjack_win: 3
 			});
+			const table_type = Object.freeze({
+				low : 1,
+				medium : 2,
+				high : 3,
+				vip: 4
+			});
 
 
+			$(function() {
+				$.ajax({
+					type : 'GET',
+					url: '../balance/',
+					async: false,
+					success: function(response){
+						switch(parseInt($("#table_id").html())){
+							case table_type.low:
+								min_bal = 5;
+								max_bal = 500;
+								break;
+							case table_type.medium:
+								min_bal = 20;
+								max_bal = 1000;
+								break;
+							case table_type.high:
+								min_bal = 50;
+								max_bal = 5000;
+								break;
+							case table_type.vip:
+								min_bal = 100;
+								max_bal = 10000;
+								break;
+						}
+						if(response < min_bal){
+							alert("You do not have enough money to sit on this table")
+							window.location.replace("/");
+						}
+						acc_bal = response;
+						$("#curr_bal").html(`Account balance : ${acc_bal}`);
+						let mid_val = 0;
+						if(acc_bal <= max_bal){
+							$("#balance_slider").attr("max", acc_bal);
+							mid_val = parseInt(acc_bal / 2);
+							while(mid_val % 5 != 0){
+								mid_val--;
+							}
+							$("#balance_slider").attr('value', mid_val);
+						}
+						else{
+							$("#balance_slider").attr("max", max_bal);
+							$("#balance_slider").attr('value', max_bal / 2);
+							mid_val = max_bal / 2;
+						}
+						$("#amount").html($("#balance_slider").attr('value')).delay(500);
+						console.log($("#amount").html($("#balance_slider").attr('value')))
+						$("#new_bal").html(`New account balance : ${acc_bal - mid_val}`);
+					}
+				})
+			});
 
 			function shuffle(){
 				let deck = [];
@@ -163,21 +255,19 @@
 				for(let card of hand){
 					if(card.Id == 1){
 						if(card.Power == 1){
+							soft = false;
 							break;
 						}
 						actual_score = 0
 						for(let i of hand){
 							actual_score += i.Power
 							if(actual_score > 21){
-								card.Power = 1
+								card.Power = 1;
+								soft = false;
+								break;
 							}
 							else if(actual_score < 21){
 								soft = true;
-							}
-							else{
-								console.log("blackjack");
-								soft = false;
-								break;
 							}
 						}
 					}
@@ -197,10 +287,16 @@
 						continue;
 					}
 					visible_score += hand[i].Power;
-					
-					
 				}
 				score = actual_score;
+				if(score == 21 && is_dealer){
+					$("#dealer_hand").html(`Dealer hand: Blackjack (21)!`);
+					return;
+				}
+				else if(score == 21 && !is_dealer){
+						$("#player_hand").html(`Player hand: Blackjack (21)!`);
+					return;
+				}
 				if(is_dealer){
 					if(soft){
 						$("#dealer_hand").html(`Dealer hand: Soft ${visible_score}`);
@@ -276,23 +372,27 @@
 			
 			
 			$("#sit-btn").click( function() {
+				$("#slider_div").attr('class', 'hidden');
+				$("#new_bal").attr('class', 'hidden');
+				$("#game_bal").attr('class', 'game_bal');
 				sitOnTable();
 				send_data();
-				$("#slider_div").attr('class', 'hidden');
 			})
+			
 			
 			const sitOnTable = () => {
 				$.ajax({
 					type : 'GET',
-					url: 'sit/',
+					url: '../table_sit/',
+					async: false,
 					success: function(response){
 						user_obj = JSON.parse(response);
+						$("#game_bal").html(`Game balance ${user_obj.game_balance}`);
 						$("#sit-btn").attr('class', 'hidden');
 						$("#clear").attr('class', 'button clear enabled');
 						$("#max").attr('class', 'button max enabled');
 						$("#bet-btn").attr('class', 'hidden');
 						update_chips();
-						console.log(user_obj);
 						deck = shuffle().slice();
 					}
 				})
@@ -301,33 +401,16 @@
 			
 			$("#balance_slider").on('input', function() {
 			  $("#amount").html(this.value);
+			  $("#new_bal").html(`New account balance : ${acc_bal - this.value}`);
 			});
 			
+
 			
-			$(function() {
-				$.ajax({
-					type : 'GET',
-					url: '../balance/',
-					success: function(response){
-						
-						if(response <= 500){
-							$("#balance_slider").attr("max", response);
-							let mid_val = parseInt(response / 2);
-							while(mid_val % 5 != 0){
-								mid_val--;
-							}
-							$("#balance_slider").attr('value', mid_val);
-						}
-						else{
-							$("#balance_slider").attr("max", 500);
-							$("#balance_slider").attr('value', 250);
-						}
-						$("#amount").html($("#balance_slider").attr('value')).delay(500);
-					}
-				})
-			});
-			
+
+
 			function check_midgame_status(){
+				dealer_score = update_score(dealer_hand, dealer_score, true, false);
+				player_score = update_score(player_hand, player_score, false, false);
 				if(player_score < 21){
 					return game_status.ongoing;
 				}
@@ -367,21 +450,20 @@
 				}
 			}
 			function dealer_hit(){
-				console.log("dealer");
 				dealer_score = hit(dealer_hand, dealer_score, true, false);
 			}
 			function player_hit(){
-				console.log("dealer");
 				player_score = hit(player_hand, player_score, false, false);
 			}
 
-			function stand(){
+			async function stand(){
 				let source = "{% static 'media/cards/' %}" + `${dealer_hand[1].Value}-${dealer_hand[1].Suit}.png`;
-				console.log(source);
 				$("#dealer_image1").attr('src', source);
 				while(dealer_score < 17){
 					dealer_hit();
+					await sleep(500);
 				}
+				dealer_score = update_score(dealer_hand, dealer_score, true, true); 
 			}
 
 			function finish_game(){
@@ -401,6 +483,7 @@
 					user_obj.game_balance += total_bet;
 					total_bet = 0;
 				}
+				$("#game_bal").html(`Game balance ${user_obj.game_balance}`);
 				$("#new-game-btn").attr('class', 'button enabled');
 				$("#leave-btn").attr('class', 'button enabled');
 			}
@@ -426,15 +509,14 @@
 				if(is_dealer){
 					$(image_name).css({"top": '200px'});
 					$(image_name).css({"left": `${dealer_pos}px`});
-					console.log(image_name);
 				}
 				else{
 					$(image_name).css({"left": `${player_pos}px`});
 				}
-				console.log(hand.lenght);
 				if((is_dealer && Object.keys(hand).length != 2) || !is_dealer){
-					$(image_name).on("transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd", function(){
-						setTimeout(() => {   $(image_name).attr('src',source); }, 300);
+					$(image_name).on("transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd",async function(){
+						await sleep(300);
+						$(image_name).attr('src',source);
 					});	
 				}
 				if(is_dealer){
@@ -452,12 +534,13 @@
 				$.ajax({
 					type : 'POST',
 					url: '../game_balance/',
+					async: false,
 					data : {
 					  'game_bal' : $("#amount").html(),
 					  'csrfmiddlewaretoken': '{{csrf_token}}',
 					},
 					success: function(response){
-						console.log(response)
+						console.log(response);
 					},
 					error: function(error){
 						console.log(error);
@@ -465,6 +548,22 @@
 				})
 			}
 			
+			const leave_table = () => {
+				$.ajax({
+					type : 'POST',
+					url: '../leave/',
+					data : {
+					  'game_bal' : user_obj.game_balance,
+					  'csrfmiddlewaretoken': '{{csrf_token}}',
+					},
+					success: function(response){
+						window.location.replace("/");
+					},
+					error: function(error){
+						window.location.replace("/");
+					}
+				})
+			}
 			$("#clear").click( function() {
 				total_bet = 0;
 				$("#bet-btn").prop('disabled', true);
@@ -498,9 +597,9 @@
 				$("#bet-btn").html(total_bet);
 				update_chips();
 			})
-			$("#bet-btn").click( function(){
+			$("#bet-btn").click(async function(){
 				user_obj.game_balance -= total_bet;
-				total_bet = 0;
+				$("#game_bal").html(`Game balance ${user_obj.game_balance}`);
 				$("#bet-btn").attr('class', 'hidden');
 				$("#clear").attr('class', 'hidden');
 				$("#5").attr('class', 'hidden');
@@ -510,48 +609,59 @@
 				$("#100").attr('class', 'hidden');
 				$("#500").attr('class', 'hidden');
 				$("#max").attr('class', 'hidden');
-				$("#dealer_hand").attr('class', 'dealer_hand enabled');
-				$("#player_hand").attr('class', 'player_hand enabled');
 				player_hit();
 				setTimeout(() => {player_hit();}, 500);
 				setTimeout(() => {dealer_hit();}, 1000);
 				setTimeout(() => {dealer_hit();}, 1500);
+				await sleep(3000);
+				$("#dealer_hand").attr('class', 'dealer_hand');
+				$("#player_hand").attr('class', 'player_hand');
 				let status = check_midgame_status();
 				if(status == game_status.ongoing){
-					setTimeout(() => {  
-						$("#hit-btn").attr('class', 'button enabled');
-						$("#stand-btn").attr('class', 'button enabled');
-						}, 2000);
+					$("#hit-btn").attr('class', 'button enabled');
+					$("#stand-btn").attr('class', 'button enabled');
+				}
+				else if(status == game_status.dealer_win){
+					$("#hit-btn").attr('class', 'hidden');
+					$("#stand-btn").attr('class', 'hidden');
+					setTimeout(async () => {
+						let source = "{% static 'media/cards/' %}" + `${dealer_hand[1].Value}-${dealer_hand[1].Suit}.png`;
+						$("#dealer_image1").attr('src',source);
+						await sleep(300);
+						finish_game();
+					}, 2000);
 				}
 				else{
 					$("#hit-btn").attr('class', 'hidden');
 					$("#stand-btn").attr('class', 'hidden');
-					setTimeout(() => {
+					setTimeout(async () => {
 						let source = "{% static 'media/cards/' %}" + `${dealer_hand[1].Value}-${dealer_hand[1].Suit}.png`;
 						$("#dealer_image1").attr('src',source);
 						stand();
+						await sleep(300);
 						finish_game();
 					}, 2000);
 				}
 
 			})
-			$("#hit-btn").click( function(){
+			$("#hit-btn").click(function(){
 				player_hit();
 				let status = check_midgame_status();
 				if(status == game_status.dealer_win){
 					$("#hit-btn").attr('class', 'hidden');
 					$("#stand-btn").attr('class', 'hidden');
-					setTimeout(() => {
+					setTimeout(async () => {
 						let source = "{% static 'media/cards/' %}" + `${dealer_hand[1].Value}-${dealer_hand[1].Suit}.png`;
 						$("#dealer_image1").attr('src',source);
+						await sleep(300);
 						finish_game();
 					}, 2000);
 				}
 				else if(status == game_status.player_blackjack_win){
 					$("#hit-btn").attr('class', 'hidden');
 					$("#stand-btn").attr('class', 'hidden');
-					setTimeout(() => {
-						stand();
+					setTimeout(async () => {
+						await sleep(100);
 						finish_game();
 					}, 200);
 				}
@@ -559,18 +669,16 @@
 			$("#stand-btn").click( function(){
 				$("#hit-btn").attr('class', 'hidden');
 				$("#stand-btn").attr('class', 'hidden');
-				setTimeout(() => {
+				setTimeout(async () => {
 					stand();
+					await sleep(1000);
 					finish_game();
 				}, 200);
-				 
-				
-				
 			})	
 			
 			$("#new-game-btn").click( function(){
-				dealer_pos = 100;
-				player_pos = 100;
+				dealer_pos = 600;
+				player_pos = 600;
 				$("#new-game-btn").attr('class', 'hidden');
 				$("#leave-btn").attr('class', 'hidden');
 				$("#dealer_hand").attr('class', 'hidden');
@@ -599,13 +707,20 @@
 					}
 				}
 				dealer_hand = [];
-				$("#sit-btn").attr('class', 'button enabled');
-				$("#slider_div").attr('class', 'slider enabled');
+				console.log(min_bal)
+				if(user_obj.game_balance < min_bal){
+					$("#sit-btn").attr('class', 'button enabled');
+					$("#slider_div").attr('class', 'slider enabled');
+				}
+				else{
+					$("#clear").attr('class', 'button clear enabled');
+					$("#max").attr('class', 'button max enabled');
+					update_chips();
+				}
 			});
 
 			$("#leave-btn").click( function(){
-				//cash out of table
-				window.location.replace("/");
+				leave_table();
 			});
 		</script>
 	

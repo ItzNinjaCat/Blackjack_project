@@ -7,14 +7,12 @@ from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 import redis, json
-from paypalcheckoutsdk.core import LiveEnvironment, SandboxEnvironment, PayPalHttpClient
+from paypalcheckoutsdk.core import SandboxEnvironment, PayPalHttpClient
 from paypalcheckoutsdk.orders import OrdersGetRequest
-from django.forms.models import model_to_dict
 from django.views.generic import FormView, TemplateView, View
 from django.http import JsonResponse, HttpResponse
 from .forms import PayPalPaymentsForm
 from currency_converter import CurrencyConverter
-from django.core import serializers
 from .game import *
 
 
@@ -70,8 +68,6 @@ class PayPalCheckOutView(FormView):
 			self.request.user.save()
 		return super().form_valid(form)
 
-# Create your views here.
-
 class HomeView(TemplateView):
 	template_name = 'homepage.html'
 	
@@ -94,7 +90,7 @@ class WithdrawView(View):
 			amount = form.cleaned_data.get('amount').amount
 			currency = form.cleaned_data.get('amount').currency
 			request.session['withdraw'] = True
-			return redirect("withdraw_checkout", currency=currency, amount=amount)
+			return redirect("deposit_checkout", currency=currency, amount=amount)
 	def get(self, request):
 		form = DepositForm()
 		return render (request=request, template_name="withdraw.html", context={"withdraw_form": form})
@@ -145,11 +141,11 @@ class LogoutView(View):
 		logout(request)
 		return redirect("login")
 
-class LowTableView(TemplateView):
-	template_name = 'table.html'
-	
 class GetUserBalance(View):
 	def get(self, request):
+		table_and_bal = dict()
+		table_and_bal['balance'] = request.user.account_balance
+		table_and_bal['table'] = request.user.account_balance
 		return HttpResponse(request.user.account_balance)
 		
 class GetGameBalance(View):
@@ -157,24 +153,21 @@ class GetGameBalance(View):
 		redis_db = redis.Redis(
 		 host= REDIS_HOST,
 		 port= REDIS_PORT, 
-		 
 		 db = 3
 		)
 		redis_db.set(request.user.id, request.POST['game_bal'])
 		return HttpResponse(request.POST['game_bal'])
 
-class LowTableSitView(View):
+class SitView(View):
 	def get(self, request):
 		redis_db_2 = redis.Redis(
 		 host= REDIS_HOST,
 		 port= REDIS_PORT, 
-		 
 		 db = 2
 		)
 		redis_db_3 = redis.Redis(
 		 host= REDIS_HOST,
 		 port= REDIS_PORT, 
-		 
 		 db = 3
 		)
 		redis_dict = {}
@@ -189,14 +182,50 @@ class LowTableSitView(View):
 		json_object = json.dumps(redis_dict, indent = 4) 
 		request.user.account_balance -= game_bal
 		request.user.save()
-		#redis_db_3.delete(request.user.id)
 		return JsonResponse(json_object, safe = False)
 
-class LowTableHitView(View):
-	def get(self, request):
-		tmp = get_card()
-		msg = f'{tmp.card_name}-{tmp.suit}.png'
-		return HttpResponse(msg, content_type='text/plain')
+class LeaveTableView(View):
+	def post(self, request):
+		redis_db_2 = redis.Redis(
+		 host= REDIS_HOST,
+		 port= REDIS_PORT, 
+		 db = 2
+		)
+		redis_db_3 = redis.Redis(
+		 host= REDIS_HOST,
+		 port= REDIS_PORT, 
+		 db = 3
+		)
+		redis_db_2.delete(request.user.id)
+		redis_db_3.delete(request.user.id)
+		request.user.account_balance += float(request.POST['game_bal'])
+		request.user.save()
+		return HttpResponse()
+
+
+class LowTableView(TemplateView):
+	def get(self, request, *args, **kwargs):
+		context = locals()
+		context['table'] = 1
+		return render(request, "table.html", context)
+
+class MediumTable(TemplateView):
+	def get(self, request, *args, **kwargs):
+		context = locals()
+		context['table'] = 2
+		return render(request, "table.html", context)
+
+class HighTable(TemplateView):
+	def get(self, request, *args, **kwargs):
+		context = locals()
+		context['table'] = 3
+		return render(request, "table.html", context)
+
+class VipTable(TemplateView):
+	def get(self, request, *args, **kwargs):
+		context = locals()
+		context['table'] = 4
+		return render(request, "table.html", context)
 
 @login_required()
 def table_high(request):
@@ -207,41 +236,3 @@ def table_vip(request):
 
 def chat(request):
     return render(request, 'chat.html')
-
-class MediumTable(TemplateView):
-	template_name = 'table.html'
-
-class MediumTableSitView(View):
-	def get(self, request):
-		redis_db_2 = redis.Redis(
-		 host= REDIS_HOST,
-		 port= REDIS_PORT, 
-		 
-		 db = 2
-		)
-		redis_db_3 = redis.Redis(
-		 host= REDIS_HOST,
-		 port= REDIS_PORT, 
-		 
-		 db = 3
-		)
-		redis_dict = {}
-		redis_dict['id'] = request.user.id
-		redis_dict['username'] = request.user.username
-		redis_dict['first_name'] = request.user.first_name
-		redis_dict['last_name'] = request.user.last_name
-		redis_dict['table'] = 'medium'
-		game_bal = float(redis_db_3.get(request.user.id))
-		redis_dict['game_balance'] = game_bal
-		redis_db_2.hmset(request.user.id, redis_dict)
-		json_object = json.dumps(redis_dict, indent = 4) 
-		request.user.account_balance -= game_bal
-		request.user.save()
-		redis_db_3.delete(request.user.id)
-		return JsonResponse(json_object, safe = False)
-
-class MediumTableHitView(View):
-	def get(self, request):
-		tmp = get_card()
-		msg = f'{tmp.card_name}-{tmp.suit}.png'
-		return HttpResponse(msg, content_type='text/plain')
